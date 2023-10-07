@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cmath>
 #include <fstream>
 
@@ -553,8 +554,14 @@ void QSim_GUI::handle_reset()
 
 void QSim_GUI::handle_run()
 {
+	auto const start = std::chrono::steady_clock::now();
+
 	qsim->run(num_runs);
 	update_waveform_samples();
+
+	auto const finish = std::chrono::steady_clock::now();
+	auto const ellapsed = std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count();
+	print_to_console("Run complete after " + std::to_string(ellapsed) + "ms");
 }
 
 void QSim_GUI::handle_step()
