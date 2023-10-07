@@ -1,3 +1,3 @@
 #pragma once
 
-#define VERSION "2023.09.25.1"
+#define VERSION "2023.10.07.1"

@@ -21,20 +21,20 @@ static void trim(std::string_view &string, char const *delims)
 
 static std::vector<std::string_view> split(std::string_view string, char const *delims)
 {
-    std::vector<std::string_view> parts;
-    size_t pos_start = 0;
-    trim(string, delims);
-    while (pos_start < string.size()) {
-        size_t const pos_end = string.find_first_of(delims, pos_start);
-        if (pos_end == std::string_view::npos) {
-	        parts.push_back(string.substr(pos_start));
-	        pos_start = pos_end;
-	    } else {
-	        parts.push_back(string.substr(pos_start, pos_end - pos_start));
-	        pos_start = string.find_first_not_of(delims, pos_end + 1);
-	    }
-    }
-    return parts;
+	std::vector<std::string_view> parts;
+	size_t pos_start = 0;
+	trim(string, delims);
+	while (pos_start < string.size()) {
+		size_t const pos_end = string.find_first_of(delims, pos_start);
+		if (pos_end == std::string_view::npos) {
+			parts.push_back(string.substr(pos_start));
+			pos_start = pos_end;
+		} else {
+			parts.push_back(string.substr(pos_start, pos_end - pos_start));
+			pos_start = string.find_first_not_of(delims, pos_end + 1);
+		}
+	}
+	return parts;
 }
 
 static std::optional<uint8_t> decode_operand(std::string_view operand)
@@ -155,8 +155,8 @@ void Quantum_Program::add_operation(Gate gate, Expression const &expression, uin
 {
 	if (expression.parts.size() != (num_operands + has_immediate + 1)) {
 		set_error(expression.line_number,
-		          "Gate " + std::string(expression.parts[0]) + " expects " + std::to_string(num_operands) + " operands, " +
-		          std::to_string(expression.parts.size() - 1) + " operands found");
+				  "Gate " + std::string(expression.parts[0]) + " expects " + std::to_string(num_operands) + " operands, " +
+				  std::to_string(expression.parts.size() - 1) + " operands found");
 		return;
 	}
 

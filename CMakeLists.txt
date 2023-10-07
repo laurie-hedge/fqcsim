@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.11)
+cmake_policy(SET CMP0048 NEW)
 
-project(fqcsim)
+project(fqcsim
+	VERSION 2023.10.07.1
+)
 
 set(SOURCES
 	src/main.cpp
@@ -46,3 +49,6 @@ if (WIN32)
 			d3dcompiler.lib
 	)
 endif()
+
+add_subdirectory(external/Catch2)
+add_subdirectory(test)

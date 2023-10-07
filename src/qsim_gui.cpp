@@ -418,7 +418,7 @@ void QSim_GUI::update_probabilities_window(std::vector<Amplitude> const &amplitu
 
 	if (ImPlot::BeginPlot("Probabilities", { -1, -1 }, ImPlotFlags_Equal | ImPlotFlags_NoMouseText | ImPlotFlags_NoInputs )) {
 		ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
-        ImPlot::SetupAxesLimits(-0.5, 0.5, -0.5, 0.5);
+		ImPlot::SetupAxesLimits(-0.5, 0.5, -0.5, 0.5);
 		ImPlot::PlotPieChart(segment_labels, data, (int)amplitudes.size(), 0.0, 0.0, 0.2, "%.2f");
 		ImPlot::EndPlot();
 	}

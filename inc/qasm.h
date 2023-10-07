@@ -51,4 +51,3 @@ private:
 	void add_operation(Gate gate, struct Expression const &expression, uint8_t num_operands, bool has_immediate = false);
 	void set_error(uint32_t line_number, std::string const &error);
 };
- 
