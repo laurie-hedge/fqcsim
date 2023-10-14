@@ -69,7 +69,7 @@ Quantum_Program::Quantum_Program(std::string source_code)
 {
 	std::vector<Expression> expressions;
 
-	std::transform(source_code.begin(), source_code.end(), source_code.begin(), std::tolower);
+	std::transform(source_code.begin(), source_code.end(), source_code.begin(), [](char c) { return std::tolower(c); });
 
 	uint32_t line_number = 1;
 	std::vector<std::string_view> lines = split(source_code, "\n\r");

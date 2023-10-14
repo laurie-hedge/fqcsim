@@ -21,10 +21,6 @@ int main(int argc, char const **argv)
 			gui.handle_file_drop(*dropped_file);
 		}
 
-		if (platform_get_file_change_notification()) {
-			gui.reload_program();
-		}
-
 		gui.update();
 		platform_render();
 	}

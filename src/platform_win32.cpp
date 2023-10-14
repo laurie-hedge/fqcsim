@@ -20,9 +20,6 @@ static struct Context_Win32
 
 	bool has_dropped_file = false;
 	std::filesystem::path dropped_file;
-
-	std::filesystem::path monitoring_file;
-	FILETIME last_file_write_time;
 } ctx;
 
 static void create_render_target()
@@ -229,48 +226,6 @@ void platform_quit()
 	PostQuitMessage(0);
 }
 
-std::filesystem::path platform_open_file_dialog()
-{
-	WCHAR buffer[1024] = { '\0' };
-	OPENFILENAMEW filename = { sizeof(OPENFILENAMEW) };
-	filename.hwndOwner = ctx.hwnd;
-	filename.lpstrFile = buffer;
-	filename.nMaxFile = 1024;
-	filename.lpstrFilter = L"Quantum Assembly (*.qasm)\0*.QASM\0All\0*.*\0";
-	filename.nFilterIndex = 1;
-	filename.lpstrTitle = L"Open Quantum Assembly File";
-	filename.lpstrInitialDir = nullptr;
-	filename.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
-	BOOL ok = GetOpenFileNameW(&filename);
-	ImGui::GetIO().ClearInputKeys();
-	if (ok) {
-		return std::filesystem::path(buffer);
-	} else {
-		return std::filesystem::path();
-	}
-}
-
-std::filesystem::path platform_save_file_dialog()
-{
-	WCHAR buffer[1024] = { '\0' };
-	OPENFILENAMEW filename = { sizeof(OPENFILENAMEW) };
-	filename.hwndOwner = ctx.hwnd;
-	filename.lpstrFile = buffer;
-	filename.nMaxFile = 1024;
-	filename.lpstrFilter = L"CSV (*.csv)\0*.csv\0";
-	filename.nFilterIndex = 1;
-	filename.lpstrTitle = L"Save Results";
-	filename.lpstrInitialDir = nullptr;
-	filename.Flags = OFN_PATHMUSTEXIST;
-	BOOL ok = GetSaveFileNameW(&filename);
-	ImGui::GetIO().ClearInputKeys();
-	if (ok) {
-		return std::filesystem::path(buffer);
-	} else {
-		return std::filesystem::path();
-	}
-}
-
 std::optional<std::filesystem::path> platform_get_dropped_file()
 {
 	if (ctx.has_dropped_file) {
@@ -279,24 +234,4 @@ std::optional<std::filesystem::path> platform_get_dropped_file()
 	} else {
 		return std::optional<std::filesystem::path>();
 	}
-}
-
-void platform_set_file_change_notifications(std::filesystem::path const &file)
-{
-	WIN32_FILE_ATTRIBUTE_DATA data;
-	GetFileAttributesExW(file.wstring().c_str(), GetFileExInfoStandard, &data);
-	ctx.last_file_write_time = data.ftLastWriteTime;
-	ctx.monitoring_file = file;
-}
-
-bool platform_get_file_change_notification()
-{
-	if (!ctx.monitoring_file.empty()) {
-		WIN32_FILE_ATTRIBUTE_DATA data;
-		GetFileAttributesExW(ctx.monitoring_file.wstring().c_str(), GetFileExInfoStandard, &data);
-		bool const changed = CompareFileTime(&ctx.last_file_write_time, &data.ftLastWriteTime) != 0;
-		ctx.last_file_write_time = data.ftLastWriteTime;
-		return changed;
-	}
-	return false;
 }

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <fstream>
@@ -45,12 +46,15 @@ QSim_GUI::QSim_GUI(QSim *qsim) :
 
 QSim_GUI::~QSim_GUI()
 {
-	ImGui::PopFont();
 	delete program;
 }
 
 void QSim_GUI::update()
 {
+	if (source_file_has_changed()) {
+		reload_program();
+	}
+
 	std::vector<Amplitude> amplitudes = qsim->get_amplitudes();
 
 	update_main_window();
@@ -63,6 +67,12 @@ void QSim_GUI::update()
 	update_waveform_window();
 
 	process_shortcuts();
+}
+
+bool QSim_GUI::source_file_has_changed() const
+{
+	return !program_source_file.empty() &&
+	       std::filesystem::last_write_time(program_source_file) != last_file_write_time;
 }
 
 void QSim_GUI::reload_program()
@@ -108,6 +118,7 @@ void QSim_GUI::update_main_window()
 	first_time_setup(dockspace_id, viewport->Size);
 
 	update_menu_bar();
+	update_dialogs();
 
 	ImGui::End();
 }
@@ -452,7 +463,7 @@ void QSim_GUI::first_time_setup(ImGuiID dockspace_id, ImVec2 size)
 		first_time = false;
 
 		ImGui::DockBuilderRemoveNode(dockspace_id);
-		ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderAddNode(dockspace_id, (uint32_t)ImGuiDockNodeFlags_PassthruCentralNode | (uint32_t)ImGuiDockNodeFlags_DockSpace);
 		ImGui::DockBuilderSetNodeSize(dockspace_id, size);
 
 		ImGuiID dock_id_left = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, nullptr, &dockspace_id);
@@ -505,6 +516,36 @@ void QSim_GUI::update_menu_bar()
 	}
 }
 
+void QSim_GUI::update_dialogs()
+{
+	if (open_load) {
+        ImGui::OpenPopup("Open Quantum Assembly File");
+        open_load = false;
+    }
+    if (open_save) {
+        ImGui::OpenPopup("Save Results");
+        open_save = false;
+    }
+
+    if (file_dialog.showFileDialog("Open Quantum Assembly File", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(700, 310), ".qasm"))
+    {
+    	if (!file_dialog.selected_path.empty()) {
+			load_source_file(file_dialog.selected_path);
+			update_waveform_samples();
+		}
+    }
+    if (file_dialog.showFileDialog("Save Results", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700, 310), ".csv"))
+    {
+        if (!file_dialog.selected_path.empty()) {
+        	std::string file_path = file_dialog.selected_path;
+        	if (!file_dialog.selected_path.ends_with(file_dialog.ext)) {
+        		file_path += file_dialog.ext;
+        	}
+			save_results_file(file_path);
+		}
+    }
+}
+
 void QSim_GUI::process_shortcuts()
 {
 	ImGuiIO &io = ImGui::GetIO();
@@ -531,19 +572,12 @@ void QSim_GUI::process_shortcuts()
 
 void QSim_GUI::handle_load()
 {
-	std::filesystem::path source_file = platform_open_file_dialog();
-	if (!source_file.empty()) {
-		load_source_file(source_file);
-		update_waveform_samples();
-	}
+	open_load = true;
 }
 
 void QSim_GUI::handle_save()
 {
-	std::filesystem::path write_file = platform_save_file_dialog();
-	if (!write_file.empty()) {
-		save_results_file(write_file);
-	}
+	open_save = true;
 }
 
 void QSim_GUI::handle_reset()
@@ -605,10 +639,8 @@ void QSim_GUI::load_source_file(std::filesystem::path const &source_file)
 
 	qsim->set_program(program);
 
-	if (!is_reload) {
-		program_source_file = source_file;
-		platform_set_file_change_notifications(program_source_file);
-	}
+	program_source_file = source_file;
+	last_file_write_time = std::filesystem::last_write_time(program_source_file);
 }
 
 void QSim_GUI::save_results_file(std::filesystem::path const &results_file)

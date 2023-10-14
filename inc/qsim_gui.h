@@ -6,6 +6,7 @@
 
 #include "constants.h"
 #include "imgui.h"
+#include "ImGuiFileBrowser.h"
 #include "qsim.h"
 
 class QSim;
@@ -18,11 +19,16 @@ class QSim_GUI
 	Quantum_Program *program = nullptr;
 	std::string console_text;
 	std::filesystem::path program_source_file;
+	std::filesystem::file_time_type last_file_write_time;
 	int num_runs;
 
 	static constexpr size_t num_samples = 512;
 	std::array<float, num_samples> samples_x;
 	std::array<std::array<float, num_samples>, NUM_QBITS> samples_y;
+
+	imgui_addons::ImGuiFileBrowser file_dialog;
+	bool open_load = false;
+	bool open_save = false;
 
 public:
 	QSim_GUI(QSim *qsim);
@@ -30,7 +36,6 @@ public:
 
 	void update();
 
-	void reload_program();
 	void handle_file_drop(std::filesystem::path const &file);
 
 private:
@@ -45,6 +50,7 @@ private:
 
 	void first_time_setup(ImGuiID dockspace_id, ImVec2 size);
 	void update_menu_bar();
+	void update_dialogs();
 
 	void process_shortcuts();
 
@@ -57,6 +63,9 @@ private:
 
 	void load_source_file(std::filesystem::path const &source_file);
 	void save_results_file(std::filesystem::path const &results_file);
+
+	bool source_file_has_changed() const;
+	void reload_program();
 
 	void print_to_console(std::string const &message);
 
