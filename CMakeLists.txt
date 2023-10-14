@@ -55,6 +55,14 @@ if (WIN32)
 			d3d11.lib
 			d3dcompiler.lib
 	)
+
+	if (MSVC)
+		# disable warnings from ImGui-Addons/FileBrowser
+		target_compile_options(fqcsim 
+			PRIVATE
+				"/wd4267;/wd4996;/wd4244;"
+		)
+	endif ()
 elseif (UNIX)
 	find_package(SDL2 REQUIRED)
 
