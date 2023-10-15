@@ -439,7 +439,7 @@ void QSim_GUI::update_probabilities_window(std::vector<Amplitude> const &amplitu
 	}
 
 	if (ImPlot::BeginPlot("Probabilities", { -1, -1 }, ImPlotFlags_Equal | ImPlotFlags_NoMouseText | ImPlotFlags_NoInputs )) {
-		ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
+		ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations | ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_NoDecorations | ImPlotAxisFlags_AutoFit);
 		ImPlot::SetupAxesLimits(-0.5, 0.5, -0.5, 0.5);
 		ImPlot::PlotPieChart(segment_labels, data, (int)amplitudes.size(), 0.0, 0.0, 0.2, "%.2f");
 		ImPlot::EndPlot();
@@ -456,10 +456,15 @@ void QSim_GUI::update_waveform_window()
 	ImGui::Begin("Waveform");
 
 	if (ImPlot::BeginPlot("Waveform", { -1, -1 }, ImPlotFlags_NoInputs)) {
+		ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
 		ImPlot::SetupAxesLimits(samples_x[0], samples_x[samples_x.size() - 1], -2.0, 2.0);
-		for (size_t qbit_index = 0; qbit_index < NUM_QBITS; ++qbit_index) {
-			std::string label = "q" + std::to_string(qbit_index);
-			ImPlot::PlotLine(label.c_str(), samples_x.data(), samples_y[qbit_index].data(), (int)num_samples);
+		std::vector<std::vector<uint8_t>> const &qbit_groups = qsim->get_qbit_groups();
+		for (size_t qbit_group_index = 0; qbit_group_index < qbit_groups.size(); ++qbit_group_index) {
+			std::string label = "q" + std::to_string(qbit_groups[qbit_group_index][0]);
+			for (size_t qbit_index = 1; qbit_index < qbit_groups[qbit_group_index].size(); ++qbit_index) {
+				label += "+q" + std::to_string(qbit_groups[qbit_group_index][qbit_index]);
+			}
+			ImPlot::PlotLine(label.c_str(), samples_x.data(), samples_y[qbit_group_index].data(), (int)num_samples);
 		}
 		ImPlot::EndPlot();
 	}
@@ -677,12 +682,20 @@ void QSim_GUI::update_waveform_samples()
 {
 	static double const ket_zero_freq_mul = 1.0;
 	static double const ket_one_freq_mul = 2.0;
-	for (size_t qbit_index = 0; qbit_index < samples_y.size(); ++qbit_index) {
-		std::array<std::complex<double>, 2> const qbit_state = qsim->get_qbit_state((uint8_t)qbit_index);
-		for (size_t sample_index = 0; sample_index < samples_y[qbit_index].size(); ++sample_index) {
-			float const zero_amplitude = (float)(std::sin((samples_x[sample_index] + (qbit_state[0].imag() * CONST_TAU)) * ket_zero_freq_mul) * std::abs(qbit_state[0]));
-			float const one_amplitude = (float)(std::sin((samples_x[sample_index] + (qbit_state[1].imag() * CONST_TAU)) * ket_one_freq_mul) * std::abs(qbit_state[1]));
-			samples_y[qbit_index][sample_index] = zero_amplitude + one_amplitude;
+	std::vector<std::vector<uint8_t>> const &qbit_groups = qsim->get_qbit_groups();
+	for (size_t qbit_group_index = 0; qbit_group_index < qbit_groups.size(); ++qbit_group_index) {
+		for (uint8_t qbit_index : qbit_groups[qbit_group_index]) {
+			std::array<std::complex<double>, 2> const qbit_state = qsim->get_qbit_state((uint8_t)qbit_index);
+			for (size_t sample_index = 0; sample_index < samples_y[qbit_index].size(); ++sample_index) {
+				float const zero_amplitude = (float)(std::sin((samples_x[sample_index] + (qbit_state[0].imag() * CONST_TAU)) * ket_zero_freq_mul) * std::abs(qbit_state[0]));
+				float const one_amplitude = (float)(std::sin((samples_x[sample_index] + (qbit_state[1].imag() * CONST_TAU)) * ket_one_freq_mul) * std::abs(qbit_state[1]));
+				float const sample = zero_amplitude + one_amplitude;
+				if (qbit_index == qbit_groups[qbit_group_index][0]) {
+					samples_y[qbit_group_index][sample_index] = sample;
+				} else {
+					samples_y[qbit_group_index][sample_index] += sample;
+				}
+			}
 		}
 	}
 }

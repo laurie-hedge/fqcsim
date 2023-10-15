@@ -187,6 +187,11 @@ void QSim::reset()
 	state_vector.resize(STATE_VEC_SIZE);
 	std::fill(state_vector.begin(), state_vector.end(), 0.0);
 	state_vector[0] = 1.0;
+
+	qbit_groups.clear();
+	for (uint8_t qbit_index = 0; qbit_index < NUM_QBITS; ++qbit_index) {
+		qbit_groups.push_back({qbit_index});
+	}
 }
 
 void QSim::run(int num_runs)
@@ -368,6 +373,8 @@ void QSim::perform_cnot_gate(uint8_t control_qbit, uint8_t target_qbit)
 	}
 
 	state_vector = vec_mat_mul(state_vector, mat);
+
+	update_entanglements({control_qbit, target_qbit});
 }
 
 void QSim::generate_results(int num_runs)
@@ -399,4 +406,35 @@ void QSim::generate_results(int num_runs)
 			results.push_back({ range.state, range.count });
 		}
 	}
+}
+
+void QSim::update_entanglements(std::vector<uint8_t> const &newly_entangled)
+{
+	auto has_overlap = [&](std::vector<uint8_t> const &group) {
+                        	for (uint8_t qbit : newly_entangled) {
+                        		if (std::find(group.begin(), group.end(), qbit) != group.end()) {
+                        			return true;
+                        		}
+                        	}
+                        	return false;
+                        };
+
+	// find first overlapping qbit group
+	auto first_overlapping_group = std::find_if(qbit_groups.begin(), qbit_groups.end(), has_overlap);
+
+	// merge all other groups with overlap into the group
+	for (auto group_iterator = std::find_if(first_overlapping_group + 1, qbit_groups.end(), has_overlap);
+		group_iterator != qbit_groups.end();
+		group_iterator = std::find_if(group_iterator + 1, qbit_groups.end(), has_overlap)) {
+		for (uint8_t qbit : *group_iterator) {
+			first_overlapping_group->push_back(qbit);
+		}
+		group_iterator->clear();
+	}
+
+	// sort the qbit group to ensure elements are kept in ascending order
+	std::sort(first_overlapping_group->begin(), first_overlapping_group->end());
+
+	// clear out empty groups
+	qbit_groups.erase(std::remove_if(qbit_groups.begin(), qbit_groups.end(), [](std::vector<uint8_t> const &group) { return group.empty(); }), qbit_groups.end());
 }

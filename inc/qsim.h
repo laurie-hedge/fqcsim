@@ -30,7 +30,8 @@ class QSim
 	size_t next_gate_index = 0;
 
 	std::vector<std::complex<double>> state_vector;
-	
+	std::vector<std::vector<uint8_t>> qbit_groups;
+
 	std::vector<Result> results;
 
 public:
@@ -45,6 +46,7 @@ public:
 
 	std::vector<Amplitude> get_amplitudes() const;
 	std::vector<Result> const &get_results() const { return results; }
+	std::vector<std::vector<uint8_t>> const &get_qbit_groups() const { return qbit_groups; }
 	size_t get_next_gate_index() const { return next_gate_index; }
 	std::array<std::complex<double>, 2> get_qbit_state(uint8_t qbit) const;
 
@@ -52,4 +54,5 @@ private:
 	void perform_quantum_gate(matrix<std::complex<double>> const &gate, uint8_t qbit);
 	void perform_cnot_gate(uint8_t control_qbit, uint8_t target_qbit);
 	void generate_results(int num_runs);
+	void update_entanglements(std::vector<uint8_t> const &newly_entangled);
 };
