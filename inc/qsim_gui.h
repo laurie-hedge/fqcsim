@@ -30,6 +30,8 @@ class QSim_GUI
 	bool open_load = false;
 	bool open_save = false;
 
+	ImFont *font_normal, *font_large;
+
 public:
 	QSim_GUI(QSim *qsim);
 	~QSim_GUI();

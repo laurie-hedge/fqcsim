@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "constants.h"
+#include "font.gen.h"
 #include "imgui_internal.h"
 #include "implot.h"
 #include "platform.h"
@@ -34,6 +35,11 @@ QSim_GUI::QSim_GUI(QSim *qsim) :
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
 	ImGui::StyleColorsDark();
 
+	ImFontConfig font_cfg;
+	font_cfg.FontDataOwnedByAtlas = false;
+	font_normal = io.Fonts->AddFontFromMemoryTTF((void *)raw_font_data, sizeof(raw_font_data), 13, &font_cfg);
+	font_large = io.Fonts->AddFontFromMemoryTTF((void *)raw_font_data, sizeof(raw_font_data), 25, &font_cfg);
+
 	float const x_axis_length = 4.0f * CONST_PI_F;
 	float const x_axis_start = x_axis_length * -0.5f;
 	float const step = x_axis_length / (float)samples_x.size();
@@ -57,6 +63,8 @@ void QSim_GUI::update()
 
 	std::vector<Amplitude> amplitudes = qsim->get_amplitudes();
 
+	ImGui::PushFont(font_normal);
+
 	update_main_window();
 	update_program_window();
 	update_console_window();
@@ -65,6 +73,8 @@ void QSim_GUI::update()
 	update_results_window();
 	update_probabilities_window(amplitudes);
 	update_waveform_window();
+
+	ImGui::PopFont();
 
 	process_shortcuts();
 }
@@ -142,7 +152,7 @@ void QSim_GUI::update_program_window()
 		ImGui::BeginChild("Child", ImVec2(total_width, total_height), false, ImGuiWindowFlags_HorizontalScrollbar);
 		ImDrawList *draw_list = ImGui::GetWindowDrawList();
 		ImVec2 const origin = ImGui::GetCursorScreenPos();
-		ImGui::SetWindowFontScale(2.0f);
+		ImGui::PushFont(font_large);
 
 		for (size_t i = 0; i < active_qbits.size(); ++i) {
 			ImVec2 const column_top_left { origin.x + (i * column_width), origin.y };
@@ -171,7 +181,7 @@ void QSim_GUI::update_program_window()
 
 			ImVec2 const text_size = ImGui::CalcTextSize(gate);
 			ImVec2 const label_pos { box_top_left.x + (box_size * 0.5f) - (text_size.x * 0.5f),
-									 box_top_left.y + (text_size.y * 0.25f) };
+									 box_top_left.y + (text_size.y * 0.3f) };
 			draw_list->AddText(label_pos, IM_COL32_BLACK, gate);
 		};
 
@@ -192,7 +202,7 @@ void QSim_GUI::update_program_window()
 
 			ImVec2 const text_size = ImGui::CalcTextSize("+");
 			ImVec2 const label_pos { line_end.x - (text_size.x * 0.5f),
-									 line_end.y - cnot_target_radius + (text_size.y * 0.1f) };
+									 line_end.y - cnot_target_radius + (text_size.y * 0.15f) };
 			draw_list->AddText(label_pos, IM_COL32_BLACK, "+");
 		};
 
@@ -258,7 +268,7 @@ void QSim_GUI::update_program_window()
 
 			ImVec2 const text_size = ImGui::CalcTextSize("+");
 			ImVec2 const label_pos { target_pos.x - (text_size.x * 0.5f),
-									 target_pos.y - cnot_target_radius + (text_size.y * 0.1f) };
+									 target_pos.y - cnot_target_radius + (text_size.y * 0.15f) };
 			draw_list->AddText(label_pos, IM_COL32_BLACK, "+");
 		};
 
@@ -319,7 +329,7 @@ void QSim_GUI::update_program_window()
 		ImVec2 const line_end { origin.x + total_width, line_start.y };
 		draw_list->AddLine(line_start, line_end, IM_COL32(255, 0, 0, 255), 2.0f);
 
-		ImGui::SetWindowFontScale(1.0f);
+		ImGui::PopFont();
 		ImGui::EndChild();
 	}
 	ImGui::End();

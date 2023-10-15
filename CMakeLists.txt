@@ -87,3 +87,13 @@ endif ()
 
 add_subdirectory(external/Catch2)
 add_subdirectory(test)
+
+# generate embedded font
+file(READ "external/imgui/misc/fonts/DroidSans.ttf" hex_content HEX)
+string(REPEAT "[0-9a-f]" 32 column_pattern)
+string(REGEX REPLACE "(${column_pattern})" "\\1\n\t" content "${hex_content}")
+string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1, " content "${content}")
+string(REGEX REPLACE ", $" "" content "${content}")
+set(array_definition "static uint8_t const raw_font_data[] =\n{\n\t${content}\n};")
+set(source "// Auto generated file\n#include <cstdint>\n\n${array_definition}\n")
+file(WRITE "inc/font.gen.h" "${source}")

@@ -2,3 +2,4 @@
 *.ini
 *.rdbg
 /build/
+/inc/font.gen.h
