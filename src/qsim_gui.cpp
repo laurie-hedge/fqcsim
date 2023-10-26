@@ -149,7 +149,8 @@ void QSim_GUI::update_program_window()
 		float const total_width = active_qbits.size() * column_width;
 		float const total_height = (operations.size() + 1) * row_height;
 
-		ImGui::BeginChild("Child", ImVec2(total_width, total_height), false, ImGuiWindowFlags_HorizontalScrollbar);
+		ImGui::SetNextWindowContentSize(ImVec2(total_width, total_height));
+		ImGui::BeginChild("Child", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
 		ImDrawList *draw_list = ImGui::GetWindowDrawList();
 		ImVec2 const origin = ImGui::GetCursorScreenPos();
 		ImGui::PushFont(font_large);
